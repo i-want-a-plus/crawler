@@ -58,3 +58,4 @@ typings/
 .env
 
 data.json
+db.sqlite

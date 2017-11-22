@@ -8,6 +8,8 @@ const ProgressBar = require('progress');
 const jsonfile = require('jsonfile');
 const argv = require('yargs').argv
 
+const model = require('./model');
+
 var bar = new ProgressBar('loading [:bar] :percent :current/:total', {
   total: 1,
   width: 30,
@@ -25,6 +27,8 @@ let selectors = [
   'term-dt'
 ];
 
+let props = [ 'year', 'term', 'subject', 'course' ];
+
 let processor = (queue, data = {}, cb) => {
   let o = queue.shift();
 
@@ -37,10 +41,19 @@ let processor = (queue, data = {}, cb) => {
 
   rp(option({ uri: composeUri(o) })).then($ => {
     let l = $(`tbody td a`).map(function () { return $(this).attr('href'); }).get();
-    _.each(l, o => _.set(data, o.replace('/schedule/', '').replace(/\//g, '.'), {}));
+    let ks = _.map(l, o => o.replace('/schedule/', '').replace(/\//g, '.'));
+    _.each(ks, o => _.set(data, o, {}));
     if (_.includes(selectors, $(`table`).attr('id'))) {
       queue = _.concat(queue, l);
+    } else if (argv.db) {
+      return Promise.each(
+        ks,
+        k => {
+          return model.Course.findOrCreate({ where: _.zipObject(props, _.split(k, '.')) });
+        }
+      );
     }
+  }).then(() => {
     processor(queue, data, cb);
   });
 };
@@ -49,8 +62,9 @@ module.exports = processorPromise = (a1, a2) => new Promise(resolve => processor
 
 if (require.main === module) {
   console.log(`save to [${argv.file}]`);
-  processorPromise([ 'schedule/' + (argv.endpoint || '') ])
-    .then(data => jsonfile.writeFile(argv.file, data)).then(() => {
-      console.log('\nfinished');
-    });
+  processorPromise([ 'schedule/' + (argv.endpoint || '') ]).then(data => {
+    if (argv.file) return jsonfile.writeFile(argv.file, data);
+  }).then(() => {
+    console.log('\nfinished');
+  });
 }
