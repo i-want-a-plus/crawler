@@ -4,8 +4,22 @@ var cheerio = require('cheerio');
 var model = require('./model');
 const { composeUri } = require('./util');
 
-var keys = [ 'year', 'term', 'subject', 'course' ];
-var input = [ '2018', 'spring', 'CS', '233' ];
+model.Course.findAll({
+	attributes: ['year', 'term', 'subject', 'course']
+}).then((res) => {
+	var keys = [ 'year', 'term', 'subject', 'course' ];
+	var _length = res.length;
+	for (i = 0; i < _length; i++){
+		var input = [];
+		input.push(res[i].year)
+		input.push(res[i].term)
+		input.push(res[i].subject)
+		input.push(res[i].course)
+		addSection(keys, input);
+	}
+});
+
+function addSection(keys, input){
 
 var options = {
     uri: composeUri([ 'schedule', ...input ]),
@@ -112,5 +126,7 @@ rp(options)
     .catch(function (err) {
         console.log(err);
     });
+
+}
 
 
