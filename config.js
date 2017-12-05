@@ -1,22 +1,3 @@
-//module.exports = {
-//  domain: 'https://courses.illinois.edu/',
-//  db: {
-//    host: 'localhost',
-//    dialect: 'postgres',
-//    pool: {
-//      max: 1,
-//      min: 0,
-//      acquire: 30000,
-//      idle: 10000
-//    },
-//    //storage: 'db.sqlite',
-//    logging: false,
-//    define: {
-//        underscored: false
-//    }
-//  }
-//};
-
 module.exports = {
   domain: 'https://courses.illinois.edu/',
   db: {
@@ -30,9 +11,10 @@ module.exports = {
     storage: 'db.sqlite',
     logging: false,
     define: {
-        underscored: false
+      underscored: false
     }
-  }
+  },
+  endpoint: 'http://localhost:8080'
 };
 
 

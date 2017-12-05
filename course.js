@@ -32,7 +32,7 @@ let parsers = {
   }
 };
 
-module.exports = fetchAndParseSection = ({ path }) => {
+module.exports = fetchAndParseCourse = ({ path }) => {
   var options = {
       uri: composeUri([ 'schedule', ...path ]),
       transform: function (body) {
@@ -41,26 +41,38 @@ module.exports = fetchAndParseSection = ({ path }) => {
   };
 
   return rp(options).then(({ $, body }) => {
-    let sections = [];
+    let course = {};
+
+    let couseString = String($('.app-inline').text());
+    course.subject = couseString.substring(0, couseString.indexOf(' '));
+    course.course = couseString.substring(couseString.indexOf(' ') + 1);
+    course.title = $('.app-label.app-text-engage').text();
+    course.gened = [];
+
+    $('.list-unstyled.sort-list li').each(function () {
+      course.gened.push($(this).text());
+    });
+
+    course.sections = [];
     try {
       $('script').each((idx, el) => {
         let c = $(el).html();
         if (c.indexOf('sectionDataObj') != -1) {
-          sections = eval('(function(){' + c + ';return sectionDataObj;})()');
+          course.sections = eval('(function(){' + c + ';return sectionDataObj;})()');
         }
       });
     } catch (e) {};
 
-    sections = _.map(sections, section => _.pick(_.mapValues(section, (v, k, o) => {
+    course.sections = _.map(course.sections, section => _.pick(_.mapValues(section, (v, k, o) => {
       if (_.has(parsers, k)) return parsers[k](v); else return v;
     }), [ 'status', 'crn', 'section', 'time', 'day', 'location', 'instructor' ]));
 
-    return sections;
+    return course;
   });
 };
 
 if (require.main === module) {
-  return fetchAndParseSection({
+  return fetchAndParseCourse({
     path: _.split(argv.path, /,\//g)
   }).then(data => { console.log(data); });
 }
